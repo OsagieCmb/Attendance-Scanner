@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Church Attendance Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        #reader {
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            display: block;
+        }
+
+        .member-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .member-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .member-info p {
+            color: #666;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        .member-info strong {
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h4 {
+            font-size: 14px;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .stat-card p {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        #camera-permission {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        #camera-permission button {
+            margin-top: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Attendance Scanner</h1>
+            <p>Scan member QR codes to record attendance</p>
+        </div>
+
+        <div id="camera-permission">
+            <p>📸 Camera access required to scan QR codes</p>
+            <button class="btn-primary" onclick="startScanner()">Enable Camera</button>
+        </div>
+
+        <div id="scanner-section" style="display: none;">
+            <div class="controls">
+                <button id="start-btn" class="btn-primary" onclick="startScanning()">Start Scanning</button>
+                <button id="stop-btn" class="btn-danger" onclick="stopScanning()" style="display: none;">Stop Scanning</button>
+            </div>
+
+            <div id="reader"></div>
+
+            <div id="status" class="status"></div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <h4>Today's Check-ins</h4>
+                    <p id="today-count">0</p>
+                </div>
+                <div class="stat-card">
+                    <h4>Total Scanned</h4>
+                    <p id="total-count">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        
+        // IMPORTANT: Replace this with your deployed Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzO4qfHvXUMnjO68AQ9QAPcKWL1IwfpIR5siyLJa_6MVBwj4qzCIJa9SuOqsUR2dOGrPA/exec';
+        
+        // ==========================================
+        // GLOBAL VARIABLES
+        // ==========================================
+        
+        let html5QrCode = null;
+        let isScanning = false;
+        let todayCount = 0;
+        let totalCount = 0;
+        let lastScanTime = 0;
+        const SCAN_COOLDOWN = 3000; // 3 seconds between scans of same code
+
+        // ==========================================
+        // SCANNER INITIALIZATION
+        // ==========================================
+
+        function startScanner() {
+            document.getElementById('camera-permission').style.display = 'none';
+            document.getElementById('scanner-section').style.display = 'block';
+            initializeScanner();
+        }
+
+        function initializeScanner() {
+            html5QrCode = new Html5Qrcode("reader");
+            showStatus('Scanner initialized. Click "Start Scanning" to begin.', 'info');
+        }
+
+        // ==========================================
+        // SCANNING CONTROL
+        // ==========================================
+
+        async function startScanning() {
+            if (isScanning) return;
+
+            try {
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                );
+
+                isScanning = true;
+                document.getElementById('start-btn').style.display = 'none';
+                document.getElementById('stop-btn').style.display = 'block';
+                showStatus('Scanner active. Position QR code in the box.', 'info');
+
+            } catch (error) {
+                console.error('Error starting scanner:', error);
+                showStatus('Failed to start scanner: ' + error, 'error');
+            }
+        }
+
+        async function stopScanning() {
+            if (!isScanning) return;
+
+            try {
+                await html5QrCode.stop();
+                isScanning = false;
+                document.getElementById('start-btn').style.display = 'block';
+                document.getElementById('stop-btn').style.display = 'none';
+                showStatus('Scanner stopped.', 'info');
+
+            } catch (error) {
+                console.error('Error stopping scanner:', error);
+            }
+        }
+
+        // ==========================================
+        // QR CODE PROCESSING
+        // ==========================================
+
+        function onScanSuccess(decodedText, decodedResult) {
+            const now = Date.now();
+            
+            // Prevent rapid duplicate scans
+            if (now - lastScanTime < SCAN_COOLDOWN) {
+                return;
+            }
+            lastScanTime = now;
+
+            try {
+                const memberData = JSON.parse(decodedText);
+                
+                // Validate QR code data
+                if (!memberData.id || !memberData.firstName || !memberData.lastName) {
+                    throw new Error('Invalid QR code format');
+                }
+
+                // Record attendance
+                recordAttendance(memberData);
+
+            } catch (error) {
+                console.error('QR code parsing error:', error);
+                showStatus('Invalid QR code. Please try again.', 'error');
+            }
+        }
+
+        function onScanFailure(error) {
+            // Silent failure - normal when no QR code is in view
+        }
+
+        // ==========================================
+        // ATTENDANCE RECORDING
+        // ==========================================
+
+        async function recordAttendance(memberData) {
+            showStatus('Recording attendance...', 'info');
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Required for Google Apps Script
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(memberData)
+                });
+
+                // Note: Due to no-cors mode, we can't read the response
+                // We assume success if no error is thrown
+                
+                // Update UI
+                todayCount++;
+                totalCount++;
+                updateStats();
+
+                showSuccessMessage(memberData);
+
+            } catch (error) {
+                console.error('Error recording attendance:', error);
+                showStatus('Failed to record attendance. Please try again.', 'error');
+            }
+        }
+
+        // ==========================================
+        // UI UPDATES
+        // ==========================================
+
+        function showSuccessMessage(memberData) {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            const message = `
+                <div class="member-info">
+                    <h3>✅ Check-in Successful!</h3>
+                    <p><strong>Name:</strong> ${memberData.firstName} ${memberData.lastName}</p>
+                    <p><strong>Gender:</strong> ${memberData.gender}</p>
+                    <p><strong>Member ID:</strong> ${memberData.id}</p>
+                    <p><strong>Time:</strong> ${timeString}</p>
+                </div>
+            `;
+
+            showStatus(message, 'success');
+
+            // Play success sound (optional)
+            playSuccessSound();
+
+            // Auto-clear after 5 seconds
+            setTimeout(() => {
+                if (document.getElementById('status').className.includes('success')) {
+                    hideStatus();
+                }
+            }, 5000);
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function hideStatus() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'none';
+        }
+
+        function updateStats() {
+            document.getElementById('today-count').textContent = todayCount;
+            document.getElementById('total-count').textContent = totalCount;
+        }
+
+        function playSuccessSound() {
+            // Create a simple beep sound
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+
+        // Reset today's count at midnight
+        function resetDailyCount() {
+            const now = new Date();
+            const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+            const timeUntilMidnight = tomorrow - now;
+
+            setTimeout(() => {
+                todayCount = 0;
+                updateStats();
+                resetDailyCount(); // Schedule next reset
+            }, timeUntilMidnight);
+        }
+
+        // Start the daily reset timer
+        resetDailyCount();
+
+        // Load saved stats from localStorage
+        window.addEventListener('load', () => {
+            const savedDate = localStorage.getItem('scannerDate');
+            const today = new Date().toDateString();
+
+            if (savedDate === today) {
+                todayCount = parseInt(localStorage.getItem('todayCount') || '0');
+            } else {
+                todayCount = 0;
+                localStorage.setItem('scannerDate', today);
+            }
+
+            totalCount = parseInt(localStorage.getItem('totalCount') || '0');
+            updateStats();
+        });
+
+        // Save stats to localStorage
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('todayCount', todayCount);
+            localStorage.setItem('totalCount', totalCount);
+            localStorage.setItem('scannerDate', new Date().toDateString());
+        });
+
+        // ==========================================
+        // MANUAL ENTRY (Optional Feature)
+        // ==========================================
+
+        function showManualEntry() {
+            const memberId = prompt('Enter Member ID:');
+            if (!memberId) return;
+
+            // You could add a lookup feature here to fetch member details
+            // For now, we'll just record the ID
+            recordAttendance({
+                id: memberId,
+                firstName: 'Manual',
+                lastName: 'Entry',
+                gender: 'N/A'
+            });
+        }
+    </script>
+</body>
+</html>
