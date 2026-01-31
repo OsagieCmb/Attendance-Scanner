@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Church Attendance Scanner (FIXED)</title>
+    <title>Church Attendance Scanner with Photos</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * {
@@ -45,32 +45,6 @@
         .header p {
             color: #666;
             font-size: 14px;
-        }
-
-        .setup-warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .setup-warning h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-
-        .setup-warning p {
-            color: #856404;
-            font-size: 14px;
-            margin: 5px 0;
-        }
-
-        .setup-warning code {
-            background: #fff;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
         }
 
         #reader {
@@ -120,47 +94,85 @@
             display: block;
         }
 
-        .status.warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            display: block;
-        }
-
-        .member-info {
-            background: #f8f9fa;
+        /* Member Card with Photo */
+        .member-card {
+            background: #ffffff;
+            border-radius: 15px;
             padding: 20px;
-            border-radius: 10px;
             margin-top: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 20px;
+            align-items: center;
         }
 
-        .member-info h3 {
+        .member-photo-container {
+            flex-shrink: 0;
+        }
+
+        .member-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #667eea;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .member-photo-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            border: 4px solid #667eea;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .member-info-section {
+            flex: 1;
+        }
+
+        .member-card h3 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 18px;
+            margin-bottom: 12px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .member-info p {
+        .success-icon {
+            color: #28a745;
+            font-size: 28px;
+        }
+
+        .member-card p {
             color: #666;
-            margin: 5px 0;
-            font-size: 14px;
+            margin: 6px 0;
+            font-size: 15px;
+            line-height: 1.5;
         }
 
-        .member-info strong {
+        .member-card strong {
             color: #333;
+            font-weight: 600;
         }
 
-        .debug-info {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #333;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
+        .member-id-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 8px;
         }
 
         .controls {
@@ -191,15 +203,6 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
         .btn-danger {
             background: #dc3545;
             color: white;
@@ -207,15 +210,6 @@
 
         .btn-danger:hover {
             background: #c82333;
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .btn-warning:hover {
-            background: #e0a800;
         }
 
         button:disabled {
@@ -259,25 +253,33 @@
             margin-top: 15px;
         }
 
-        .test-section {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
+        .loading-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
         }
 
-        .test-section h3 {
-            margin-bottom: 15px;
-            color: #333;
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
 
-        input[type="text"] {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+        .photo-error {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #f8d7da;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #721c24;
             font-size: 14px;
-            margin-bottom: 10px;
+            text-align: center;
+            padding: 10px;
+            border: 4px solid #f5c6cb;
         }
 
         @media (max-width: 600px) {
@@ -287,6 +289,17 @@
 
             .header h1 {
                 font-size: 24px;
+            }
+
+            .member-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .member-photo,
+            .member-photo-placeholder {
+                width: 100px;
+                height: 100px;
             }
 
             .stats {
@@ -302,13 +315,6 @@
             <p>Scan member QR codes to record attendance</p>
         </div>
 
-        <!-- Setup Warning (will auto-hide if configured) -->
-        <div id="setup-warning" class="setup-warning">
-            <h3>⚠️ Configuration Required</h3>
-            <p>Before using this scanner, you need to update the <code>SCRIPT_URL</code> below (line ~350).</p>
-            <p>Replace <code>YOUR_DEPLOYMENT_ID</code> with your actual Apps Script Web App URL.</p>
-        </div>
-
         <div id="camera-permission">
             <p>📸 Camera access required to scan QR codes</p>
             <button class="btn-primary" onclick="startScanner()">Enable Camera</button>
@@ -318,27 +324,11 @@
             <div class="controls">
                 <button id="start-btn" class="btn-primary" onclick="startScanning()">Start Scanning</button>
                 <button id="stop-btn" class="btn-danger" onclick="stopScanning()" style="display: none;">Stop Scanning</button>
-                <button class="btn-warning" onclick="toggleTestMode()">Test Mode</button>
             </div>
 
             <div id="reader"></div>
 
             <div id="status" class="status"></div>
-
-            <!-- Test Mode Section -->
-            <div id="test-mode" class="test-section" style="display: none;">
-                <h3>🧪 Test Mode - Manual Entry</h3>
-                <p style="margin-bottom: 15px; font-size: 14px; color: #666;">
-                    Test the connection without scanning a QR code
-                </p>
-                <input type="text" id="test-id" placeholder="Member ID (e.g., MBR-001)" />
-                <input type="text" id="test-firstname" placeholder="First Name" />
-                <input type="text" id="test-lastname" placeholder="Last Name" />
-                <input type="text" id="test-gender" placeholder="Gender" />
-                <button class="btn-primary" onclick="testConnection()" style="width: 100%;">
-                    Test Connection
-                </button>
-            </div>
 
             <div class="stats">
                 <div class="stat-card">
@@ -358,11 +348,9 @@
         // CONFIGURATION
         // ==========================================
         
-        // CRITICAL: Replace YOUR_DEPLOYMENT_ID with your actual Web App URL
-        // Example: 'https://script.google.com/macros/s/AKfycbxxx.../exec'
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzO4qfHvXUMnjO68AQ9QAPcKWL1IwfpIR5siyLJa_6MVBwj4qzCIJa9SuOqsUR2dOGrPA/exec';
+        // IMPORTANT: Replace this with your deployed Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
         
-        // Debug mode - set to true to see detailed logs
         const DEBUG_MODE = true;
         
         // ==========================================
@@ -374,25 +362,7 @@
         let todayCount = 0;
         let totalCount = 0;
         let lastScanTime = 0;
-        const SCAN_COOLDOWN = 3000; // 3 seconds between scans
-
-        // ==========================================
-        // INITIALIZATION
-        // ==========================================
-
-        window.addEventListener('load', () => {
-            // Check if SCRIPT_URL is configured
-            if (SCRIPT_URL.includes('YOUR_DEPLOYMENT_ID')) {
-                document.getElementById('setup-warning').style.display = 'block';
-            } else {
-                document.getElementById('setup-warning').style.display = 'none';
-                // Test the connection
-                testScriptConnection();
-            }
-
-            // Load saved stats
-            loadStats();
-        });
+        const SCAN_COOLDOWN = 3000;
 
         // ==========================================
         // SCANNER INITIALIZATION
@@ -408,10 +378,6 @@
             html5QrCode = new Html5Qrcode("reader");
             showStatus('Scanner initialized. Click "Start Scanning" to begin.', 'info');
         }
-
-        // ==========================================
-        // SCANNING CONTROL
-        // ==========================================
 
         async function startScanning() {
             if (isScanning) return;
@@ -460,7 +426,6 @@
         function onScanSuccess(decodedText, decodedResult) {
             const now = Date.now();
             
-            // Prevent rapid duplicate scans
             if (now - lastScanTime < SCAN_COOLDOWN) {
                 return;
             }
@@ -469,28 +434,24 @@
             debugLog('QR Code scanned:', decodedText);
 
             try {
-                // Parse QR code data
                 const memberData = JSON.parse(decodedText);
                 
                 debugLog('Parsed member data:', memberData);
                 
-                // Validate QR code data structure
                 if (!validateMemberData(memberData)) {
                     throw new Error('Invalid QR code format - missing required fields');
                 }
 
-                // Record attendance
                 recordAttendance(memberData);
 
             } catch (error) {
                 console.error('QR code parsing error:', error);
-                showStatus('❌ Invalid QR code format. Please try again.<br>' + 
-                          '<div class="debug-info">Error: ' + error.message + '</div>', 'error');
+                showStatus('❌ Invalid QR code. Please try again.', 'error');
             }
         }
 
         function onScanFailure(error) {
-            // Silent failure - normal when no QR code is in view
+            // Silent failure
         }
 
         function validateMemberData(data) {
@@ -516,7 +477,6 @@
             debugLog('Member data:', JSON.stringify(memberData, null, 2));
 
             try {
-                // For Google Apps Script, we need to use fetch with specific settings
                 const response = await fetch(SCRIPT_URL, {
                     redirect: 'follow',
                     method: 'POST',
@@ -527,9 +487,7 @@
                 });
 
                 debugLog('Response status:', response.status);
-                debugLog('Response URL:', response.url);
 
-                // Try to parse response
                 let result;
                 try {
                     const text = await response.text();
@@ -537,7 +495,6 @@
                     result = JSON.parse(text);
                 } catch (parseError) {
                     debugLog('Failed to parse response:', parseError);
-                    // Assume success if we got a 200 response
                     if (response.ok) {
                         result = { success: true };
                     } else {
@@ -546,13 +503,12 @@
                 }
 
                 if (result.success !== false) {
-                    // Success!
                     todayCount++;
                     totalCount++;
                     updateStats();
                     saveStats();
                     
-                    showSuccessMessage(memberData);
+                    showSuccessMessage(memberData, result.photoUrl);
                     playSuccessSound();
                 } else {
                     throw new Error(result.error || 'Unknown error occurred');
@@ -560,103 +516,68 @@
 
             } catch (error) {
                 console.error('Error recording attendance:', error);
-                showStatus(
-                    '❌ Failed to record attendance<br>' + 
-                    '<div class="debug-info">' +
-                    'Error: ' + error.message + '<br>' +
-                    'Check that your SCRIPT_URL is correct and the Web App is deployed.' +
-                    '</div>', 
-                    'error'
-                );
+                showStatus('❌ Failed to record attendance. ' + error.message, 'error');
             }
         }
 
         // ==========================================
-        // TEST MODE
+        // UI UPDATES WITH PHOTO
         // ==========================================
 
-        function toggleTestMode() {
-            const testMode = document.getElementById('test-mode');
-            if (testMode.style.display === 'none') {
-                testMode.style.display = 'block';
-                showStatus('🧪 Test mode enabled. You can manually enter member data to test the connection.', 'info');
-            } else {
-                testMode.style.display = 'none';
-            }
-        }
-
-        async function testConnection() {
-            const testData = {
-                id: document.getElementById('test-id').value || 'TEST-001',
-                firstName: document.getElementById('test-firstname').value || 'Test',
-                lastName: document.getElementById('test-lastname').value || 'User',
-                gender: document.getElementById('test-gender').value || 'Male'
-            };
-
-            debugLog('Testing with data:', testData);
-            
-            if (!validateMemberData(testData)) {
-                showStatus('❌ Please fill in all test fields', 'error');
-                return;
-            }
-
-            await recordAttendance(testData);
-        }
-
-        async function testScriptConnection() {
-            try {
-                debugLog('Testing connection to:', SCRIPT_URL);
-                
-                const response = await fetch(SCRIPT_URL, {
-                    redirect: 'follow',
-                    method: 'GET'
-                });
-
-                if (response.ok) {
-                    debugLog('✅ Connection successful!');
-                    const text = await response.text();
-                    debugLog('Server response:', text);
-                } else {
-                    debugLog('⚠️ Connection returned status:', response.status);
-                }
-            } catch (error) {
-                debugLog('❌ Connection test failed:', error.message);
-                showStatus(
-                    '⚠️ Cannot connect to Apps Script. Please check your SCRIPT_URL.', 
-                    'warning'
-                );
-            }
-        }
-
-        // ==========================================
-        // UI UPDATES
-        // ==========================================
-
-        function showSuccessMessage(memberData) {
+        function showSuccessMessage(memberData, photoUrl) {
             const now = new Date();
             const timeString = now.toLocaleTimeString('en-US', { 
                 hour: '2-digit', 
                 minute: '2-digit' 
             });
 
+            // Get initials for placeholder
+            const initials = (memberData.firstName.charAt(0) + memberData.lastName.charAt(0)).toUpperCase();
+
+            // Build photo HTML
+            let photoHTML;
+            if (photoUrl && photoUrl.trim() !== '') {
+                photoHTML = `
+                    <div class="member-photo-container">
+                        <img 
+                            src="${photoUrl}" 
+                            alt="${memberData.firstName} ${memberData.lastName}"
+                            class="member-photo"
+                            onerror="this.parentElement.innerHTML='<div class=\\'member-photo-placeholder\\'>${initials}</div>'"
+                        />
+                    </div>
+                `;
+            } else {
+                photoHTML = `
+                    <div class="member-photo-container">
+                        <div class="member-photo-placeholder">${initials}</div>
+                    </div>
+                `;
+            }
+
             const message = `
-                <div class="member-info">
-                    <h3>✅ Check-in Successful!</h3>
-                    <p><strong>Name:</strong> ${memberData.firstName} ${memberData.lastName}</p>
-                    <p><strong>Gender:</strong> ${memberData.gender}</p>
-                    <p><strong>Member ID:</strong> ${memberData.id}</p>
-                    <p><strong>Time:</strong> ${timeString}</p>
+                <div class="member-card">
+                    ${photoHTML}
+                    <div class="member-info-section">
+                        <h3>
+                            <span class="success-icon">✅</span>
+                            Check-in Successful!
+                        </h3>
+                        <p><strong>Name:</strong> ${memberData.firstName} ${memberData.lastName}</p>
+                        <p><strong>Gender:</strong> ${memberData.gender}</p>
+                        <p><strong>Time:</strong> ${timeString}</p>
+                        <div class="member-id-badge">${memberData.id}</div>
+                    </div>
                 </div>
             `;
 
             showStatus(message, 'success');
 
-            // Auto-clear after 5 seconds
             setTimeout(() => {
                 if (document.getElementById('status').className.includes('success')) {
                     hideStatus();
                 }
-            }, 5000);
+            }, 6000);
         }
 
         function showStatus(message, type) {
@@ -693,7 +614,7 @@
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.1);
             } catch (e) {
-                // Sound failed, but that's okay
+                // Sound failed
             }
         }
 
@@ -737,20 +658,17 @@
 
         resetDailyCount();
 
-        // ==========================================
-        // DEBUG UTILITIES
-        // ==========================================
-
         function debugLog(...args) {
             if (DEBUG_MODE) {
                 console.log('[SCANNER DEBUG]', ...args);
             }
         }
 
-        // Log startup info
-        debugLog('Scanner loaded');
+        window.addEventListener('load', loadStats);
+        window.addEventListener('beforeunload', saveStats);
+
+        debugLog('Scanner with photo support loaded');
         debugLog('Script URL:', SCRIPT_URL);
-        debugLog('Debug mode:', DEBUG_MODE);
     </script>
 </body>
 </html>
