@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Church Attendance Scanner with Photos</title>
+    <title>Church Attendance Scanner</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * {
@@ -80,6 +80,13 @@
             display: block;
         }
 
+        .status.warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            display: block;
+        }
+
         .status.error {
             background: #f8d7da;
             border: 1px solid #f5c6cb;
@@ -94,7 +101,6 @@
             display: block;
         }
 
-        /* Member Card with Photo */
         .member-card {
             background: #ffffff;
             border-radius: 15px;
@@ -152,6 +158,11 @@
             font-size: 28px;
         }
 
+        .warning-icon {
+            color: #ffc107;
+            font-size: 28px;
+        }
+
         .member-card p {
             color: #666;
             margin: 6px 0;
@@ -169,6 +180,17 @@
             background: #667eea;
             color: white;
             padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .already-checked-badge {
+            display: inline-block;
+            background: #ffc107;
+            color: #333;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 600;
@@ -253,35 +275,6 @@
             margin-top: 15px;
         }
 
-        .loading-photo {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .photo-error {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: #f8d7da;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #721c24;
-            font-size: 14px;
-            text-align: center;
-            padding: 10px;
-            border: 4px solid #f5c6cb;
-        }
-
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -311,7 +304,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📱 Attendance Scanner</h1>
+            <h1>Attendance Scanner</h1>
             <p>Scan member QR codes to record attendance</p>
         </div>
 
@@ -502,7 +495,8 @@
                     }
                 }
 
-                if (result.success !== false) {
+                if (result.success) {
+                    // NEW CHECK-IN
                     todayCount++;
                     totalCount++;
                     updateStats();
@@ -510,6 +504,12 @@
                     
                     showSuccessMessage(memberData, result.photoUrl);
                     playSuccessSound();
+                    
+                } else if (result.alreadyCheckedIn) {
+                    // ALREADY CHECKED IN TODAY
+                    showAlreadyCheckedInMessage(memberData, result);
+                    playWarningSound();
+                    
                 } else {
                     throw new Error(result.error || 'Unknown error occurred');
                 }
@@ -531,10 +531,8 @@
                 minute: '2-digit' 
             });
 
-            // Get initials for placeholder
             const initials = (memberData.firstName.charAt(0) + memberData.lastName.charAt(0)).toUpperCase();
 
-            // Build photo HTML
             let photoHTML;
             if (photoUrl && photoUrl.trim() !== '') {
                 photoHTML = `
@@ -580,6 +578,54 @@
             }, 6000);
         }
 
+        function showAlreadyCheckedInMessage(memberData, result) {
+            const initials = (memberData.firstName.charAt(0) + memberData.lastName.charAt(0)).toUpperCase();
+
+            let photoHTML;
+            if (result.photoUrl && result.photoUrl.trim() !== '') {
+                photoHTML = `
+                    <div class="member-photo-container">
+                        <img 
+                            src="${result.photoUrl}" 
+                            alt="${memberData.firstName} ${memberData.lastName}"
+                            class="member-photo"
+                            onerror="this.parentElement.innerHTML='<div class=\\'member-photo-placeholder\\'>${initials}</div>'"
+                        />
+                    </div>
+                `;
+            } else {
+                photoHTML = `
+                    <div class="member-photo-container">
+                        <div class="member-photo-placeholder">${initials}</div>
+                    </div>
+                `;
+            }
+
+            const message = `
+                <div class="member-card">
+                    ${photoHTML}
+                    <div class="member-info-section">
+                        <h3>
+                            <span class="warning-icon">⚠️</span>
+                            Already Checked In
+                        </h3>
+                        <p><strong>Name:</strong> ${memberData.firstName} ${memberData.lastName}</p>
+                        <p><strong>First Check-in:</strong> ${result.previousCheckIn}</p>
+                        <p style="color: #856404; font-weight: 600;">You've already been marked present today!</p>
+                        <div class="already-checked-badge">ONE CHECK-IN PER DAY</div>
+                    </div>
+                </div>
+            `;
+
+            showStatus(message, 'warning');
+
+            setTimeout(() => {
+                if (document.getElementById('status').className.includes('warning')) {
+                    hideStatus();
+                }
+            }, 8000);
+        }
+
         function showStatus(message, type) {
             const statusDiv = document.getElementById('status');
             statusDiv.innerHTML = message;
@@ -613,6 +659,28 @@
 
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.1);
+            } catch (e) {
+                // Sound failed
+            }
+        }
+
+        function playWarningSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 400;
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
             } catch (e) {
                 // Sound failed
             }
@@ -667,9 +735,8 @@
         window.addEventListener('load', loadStats);
         window.addEventListener('beforeunload', saveStats);
 
-        debugLog('Scanner with photo support loaded');
+        debugLog('Scanner with daily limit loaded');
         debugLog('Script URL:', SCRIPT_URL);
     </script>
 </body>
 </html>
-
