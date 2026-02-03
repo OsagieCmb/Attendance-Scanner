@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Church Attendance Scanner</title>
+    <title>Attendance Scanner · Liquid Glass</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,60 +15,220 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --purple-dark: #1a0033;
+            --purple-mid: #4a148c;
+            --purple-bright: #7c3aed;
+            --purple-neon: #a855f7;
+            --black-deep: #0a0a0f;
+            --glass-bg: rgba(26, 0, 51, 0.4);
+            --glass-border: rgba(168, 85, 247, 0.3);
+            --success-glow: #10b981;
+            --warning-glow: #f59e0b;
+            --error-glow: #ef4444;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Space Mono', monospace;
+            background: var(--black-deep);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
 
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 40px;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, var(--purple-neon), var(--purple-mid));
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, var(--purple-bright), var(--purple-dark));
+            bottom: -10%;
+            right: -10%;
+            animation-delay: -7s;
+        }
+
+        .orb:nth-child(3) {
+            width: 350px;
+            height: 350px;
+            background: radial-gradient(circle, #c026d3, var(--purple-mid));
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+        }
+
+        /* Grid overlay */
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168, 85, 247, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Liquid Glass Container */
+        .container {
+            position: relative;
+            z-index: 10;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 30px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 
+                0 8px 32px 0 rgba(124, 58, 237, 0.37),
+                inset 0 0 60px rgba(168, 85, 247, 0.1);
+            max-width: 650px;
+            width: 100%;
+            padding: 50px 40px;
+            animation: glassAppear 0.6s ease-out;
+        }
+
+        @keyframes glassAppear {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            position: relative;
         }
 
         .header h1 {
-            color: #333;
-            font-size: 28px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, var(--purple-neon), #ffffff);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-bottom: 10px;
+            letter-spacing: 2px;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
         }
 
         .header p {
-            color: #666;
+            color: rgba(255, 255, 255, 0.7);
             font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
 
+        /* Scanner Frame */
         #reader {
-            border: 3px solid #667eea;
-            border-radius: 10px;
+            border: 2px solid var(--purple-neon);
+            border-radius: 20px;
             overflow: hidden;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 0 30px rgba(168, 85, 247, 0.5),
+                inset 0 0 30px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
 
+        #reader::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--purple-neon), transparent);
+            animation: scan 2s linear infinite;
+            z-index: 100;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0;
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        /* Status Messages */
         .status {
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 30px;
             display: none;
-            animation: slideIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+            border: 1px solid;
+            animation: statusSlide 0.4s ease-out;
         }
 
-        @keyframes slideIn {
+        @keyframes statusSlide {
             from {
                 opacity: 0;
-                transform: translateY(-10px);
+                transform: translateY(-20px);
             }
             to {
                 opacity: 1;
@@ -74,214 +237,267 @@
         }
 
         .status.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success-glow);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
             display: block;
         }
 
         .status.warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--warning-glow);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
             display: block;
         }
 
         .status.error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--error-glow);
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
             display: block;
         }
 
         .status.info {
-            background: #d1ecf1;
-            border: 1px solid #bee5eb;
-            color: #0c5460;
+            background: rgba(168, 85, 247, 0.1);
+            border-color: var(--purple-neon);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
             display: block;
         }
 
+        /* Member Card */
         .member-card {
-            background: #ffffff;
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             display: flex;
-            gap: 20px;
+            gap: 25px;
             align-items: center;
+            margin-top: 20px;
         }
 
         .member-photo-container {
             flex-shrink: 0;
+            position: relative;
         }
 
-        .member-photo {
-            width: 120px;
-            height: 120px;
+        .member-photo,
+        .member-photo-placeholder {
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             object-fit: cover;
-            border: 4px solid #667eea;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 3px solid;
+            box-shadow: 0 0 20px;
+        }
+
+        .status.success .member-photo,
+        .status.success .member-photo-placeholder {
+            border-color: var(--success-glow);
+            box-shadow: 0 0 20px var(--success-glow);
+        }
+
+        .status.warning .member-photo,
+        .status.warning .member-photo-placeholder {
+            border-color: var(--warning-glow);
+            box-shadow: 0 0 20px var(--warning-glow);
         }
 
         .member-photo-placeholder {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--purple-bright), var(--purple-neon));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 48px;
+            font-size: 36px;
             font-weight: bold;
-            border: 4px solid #667eea;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-family: 'Orbitron', sans-serif;
         }
 
-        .member-info-section {
-            flex: 1;
-        }
-
-        .member-card h3 {
-            color: #333;
+        .member-info-section h3 {
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
             margin-bottom: 12px;
-            font-size: 22px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        .success-icon {
-            color: #28a745;
-            font-size: 28px;
+        .member-info-section p {
+            color: rgba(255, 255, 255, 0.8);
+            margin: 8px 0;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
-        .warning-icon {
-            color: #ffc107;
-            font-size: 28px;
-        }
-
-        .member-card p {
-            color: #666;
-            margin: 6px 0;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        .member-card strong {
-            color: #333;
-            font-weight: 600;
-        }
-
-        .member-id-badge {
-            display: inline-block;
-            background: #667eea;
+        .member-info-section strong {
             color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 8px;
+            font-weight: 700;
         }
 
-        .already-checked-badge {
+        .icon {
+            font-size: 24px;
+        }
+
+        .badge {
             display: inline-block;
-            background: #ffc107;
-            color: #333;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 8px;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            text-transform: uppercase;
         }
 
+        .success-badge {
+            background: var(--success-glow);
+            color: var(--black-deep);
+            box-shadow: 0 0 15px var(--success-glow);
+        }
+
+        .warning-badge {
+            background: var(--warning-glow);
+            color: var(--black-deep);
+            box-shadow: 0 0 15px var(--warning-glow);
+        }
+
+        /* Controls */
         .controls {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 30px;
         }
 
         button {
             flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 16px 28px;
+            border: 2px solid;
+            border-radius: 15px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+            text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-primary {
-            background: #667eea;
+            background: rgba(168, 85, 247, 0.2);
+            border-color: var(--purple-neon);
             color: white;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
         }
 
         .btn-primary:hover {
-            background: #5568d3;
+            background: rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error-glow);
             color: white;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
         }
 
         .btn-danger:hover {
-            background: #c82333;
+            background: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+            transform: translateY(-2px);
         }
 
         button:disabled {
-            opacity: 0.6;
+            opacity: 0.4;
             cursor: not-allowed;
         }
 
+        button:disabled:hover {
+            transform: none;
+        }
+
+        /* Stats */
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 20px;
+            margin-top: 30px;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
+            background: rgba(26, 0, 51, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 25px;
+            border-radius: 20px;
             text-align: center;
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
         }
 
         .stat-card h4 {
-            font-size: 14px;
-            margin-bottom: 5px;
-            opacity: 0.9;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
 
         .stat-card p {
-            font-size: 32px;
-            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--purple-neon), #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         #camera-permission {
             text-align: center;
-            padding: 30px;
-            color: #666;
+            padding: 40px;
         }
 
-        #camera-permission button {
-            margin-top: 15px;
+        #camera-permission p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
         }
 
+        /* Responsive */
         @media (max-width: 600px) {
             .container {
-                padding: 20px;
+                padding: 30px 20px;
             }
 
             .header h1 {
-                font-size: 24px;
+                font-size: 32px;
             }
 
             .member-card {
@@ -289,34 +505,55 @@
                 text-align: center;
             }
 
-            .member-photo,
-            .member-photo-placeholder {
-                width: 100px;
-                height: 100px;
-            }
-
             .stats {
                 grid-template-columns: 1fr;
             }
+
+            .stat-card p {
+                font-size: 40px;
+            }
+        }
+
+        /* Glow effects */
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 20px var(--purple-neon);
+            }
+            50% {
+                box-shadow: 0 0 40px var(--purple-neon);
+            }
+        }
+
+        .container {
+            animation: glassAppear 0.6s ease-out, glow 3s ease-in-out infinite;
         }
     </style>
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <!-- Main Container -->
     <div class="container">
         <div class="header">
-            <h1>Attendance Scanner</h1>
-            <p>Scan member QR codes to record attendance</p>
+            <h1>ATTENDANCE</h1>
+            <p>Quantum Scanner Active</p>
         </div>
 
         <div id="camera-permission">
-            <p>📸 Camera access required to scan QR codes</p>
-            <button class="btn-primary" onclick="startScanner()">Enable Camera</button>
+            <p>📡 CAMERA ACCESS REQUIRED</p>
+            <button class="btn-primary" onclick="startScanner()">INITIALIZE SCANNER</button>
         </div>
 
         <div id="scanner-section" style="display: none;">
             <div class="controls">
-                <button id="start-btn" class="btn-primary" onclick="startScanning()">Start Scanning</button>
-                <button id="stop-btn" class="btn-danger" onclick="stopScanning()" style="display: none;">Stop Scanning</button>
+                <button id="start-btn" class="btn-primary" onclick="startScanning()">START SCAN</button>
+                <button id="stop-btn" class="btn-danger" onclick="stopScanning()" style="display: none;">STOP SCAN</button>
             </div>
 
             <div id="reader"></div>
@@ -337,18 +574,8 @@
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURATION
-        // ==========================================
-        
-        // IMPORTANT: Replace this with your deployed Google Apps Script Web App URL
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzO4qfHvXUMnjO68AQ9QAPcKWL1IwfpIR5siyLJa_6MVBwj4qzCIJa9SuOqsUR2dOGrPA/exec';
-        
         const DEBUG_MODE = true;
-        
-        // ==========================================
-        // GLOBAL VARIABLES
-        // ==========================================
         
         let html5QrCode = null;
         let isScanning = false;
@@ -356,10 +583,6 @@
         let totalCount = 0;
         let lastScanTime = 0;
         const SCAN_COOLDOWN = 3000;
-
-        // ==========================================
-        // SCANNER INITIALIZATION
-        // ==========================================
 
         function startScanner() {
             document.getElementById('camera-permission').style.display = 'none';
@@ -369,7 +592,7 @@
 
         function initializeScanner() {
             html5QrCode = new Html5Qrcode("reader");
-            showStatus('Scanner initialized. Click "Start Scanning" to begin.', 'info');
+            showStatus('System initialized. Ready to scan.', 'info');
         }
 
         async function startScanning() {
@@ -378,10 +601,7 @@
             try {
                 await html5QrCode.start(
                     { facingMode: "environment" },
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 }
-                    },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
                     onScanSuccess,
                     onScanFailure
                 );
@@ -389,11 +609,11 @@
                 isScanning = true;
                 document.getElementById('start-btn').style.display = 'none';
                 document.getElementById('stop-btn').style.display = 'block';
-                showStatus('✅ Scanner active. Position QR code in the box.', 'info');
+                showStatus('🎯 Scanner active. Position QR code.', 'info');
 
             } catch (error) {
-                console.error('Error starting scanner:', error);
-                showStatus('❌ Failed to start scanner: ' + error.message, 'error');
+                console.error('Scanner error:', error);
+                showStatus('Failed to start scanner: ' + error.message, 'error');
             }
         }
 
@@ -405,16 +625,12 @@
                 isScanning = false;
                 document.getElementById('start-btn').style.display = 'block';
                 document.getElementById('stop-btn').style.display = 'none';
-                showStatus('Scanner stopped.', 'info');
+                showStatus('Scanner deactivated.', 'info');
 
             } catch (error) {
                 console.error('Error stopping scanner:', error);
             }
         }
-
-        // ==========================================
-        // QR CODE PROCESSING
-        // ==========================================
 
         function onScanSuccess(decodedText, decodedResult) {
             const now = Date.now();
@@ -424,206 +640,115 @@
             }
             lastScanTime = now;
 
-            debugLog('QR Code scanned:', decodedText);
-
             try {
                 const memberData = JSON.parse(decodedText);
                 
-                debugLog('Parsed member data:', memberData);
-                
                 if (!validateMemberData(memberData)) {
-                    throw new Error('Invalid QR code format - missing required fields');
+                    throw new Error('Invalid QR code format');
                 }
 
                 recordAttendance(memberData);
 
             } catch (error) {
-                console.error('QR code parsing error:', error);
-                showStatus('❌ Invalid QR code. Please try again.', 'error');
+                console.error('QR parsing error:', error);
+                showStatus('Invalid QR code detected.', 'error');
             }
         }
 
-        function onScanFailure(error) {
-            // Silent failure
-        }
+        function onScanFailure(error) {}
 
         function validateMemberData(data) {
             const required = ['id', 'firstName', 'lastName', 'gender'];
-            const missing = required.filter(field => !data[field]);
-            
-            if (missing.length > 0) {
-                debugLog('Missing required fields:', missing);
-                return false;
-            }
-            
-            return true;
+            return required.every(field => data[field]);
         }
 
-        // ==========================================
-        // ATTENDANCE RECORDING
-        // ==========================================
-
         async function recordAttendance(memberData) {
-            showStatus('⏳ Recording attendance...', 'info');
-            
-            debugLog('Sending data to:', SCRIPT_URL);
-            debugLog('Member data:', JSON.stringify(memberData, null, 2));
+            showStatus('Processing...', 'info');
 
             try {
                 const response = await fetch(SCRIPT_URL, {
                     redirect: 'follow',
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
-                    },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(memberData)
                 });
-
-                debugLog('Response status:', response.status);
 
                 let result;
                 try {
                     const text = await response.text();
-                    debugLog('Response text:', text);
                     result = JSON.parse(text);
-                } catch (parseError) {
-                    debugLog('Failed to parse response:', parseError);
-                    if (response.ok) {
-                        result = { success: true };
-                    } else {
-                        throw new Error('Failed to record attendance');
-                    }
+                } catch {
+                    result = response.ok ? { success: true } : { success: false };
                 }
 
                 if (result.success) {
-                    // NEW CHECK-IN
                     todayCount++;
                     totalCount++;
                     updateStats();
                     saveStats();
-                    
                     showSuccessMessage(memberData, result.photoUrl);
-                    playSuccessSound();
-                    
+                    playSound(800);
                 } else if (result.alreadyCheckedIn) {
-                    // ALREADY CHECKED IN TODAY
-                    showAlreadyCheckedInMessage(memberData, result);
-                    playWarningSound();
-                    
+                    showWarningMessage(memberData, result);
+                    playSound(400);
                 } else {
-                    throw new Error(result.error || 'Unknown error occurred');
+                    throw new Error(result.error || 'Unknown error');
                 }
 
             } catch (error) {
-                console.error('Error recording attendance:', error);
-                showStatus('❌ Failed to record attendance. ' + error.message, 'error');
+                console.error('Attendance error:', error);
+                showStatus('Connection failed: ' + error.message, 'error');
             }
         }
 
-        // ==========================================
-        // UI UPDATES WITH PHOTO
-        // ==========================================
-
         function showSuccessMessage(memberData, photoUrl) {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-
+            const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             const initials = (memberData.firstName.charAt(0) + memberData.lastName.charAt(0)).toUpperCase();
 
-            let photoHTML;
-            if (photoUrl && photoUrl.trim() !== '') {
-                photoHTML = `
-                    <div class="member-photo-container">
-                        <img 
-                            src="${photoUrl}" 
-                            alt="${memberData.firstName} ${memberData.lastName}"
-                            class="member-photo"
-                            onerror="this.parentElement.innerHTML='<div class=\\'member-photo-placeholder\\'>${initials}</div>'"
-                        />
-                    </div>
-                `;
-            } else {
-                photoHTML = `
-                    <div class="member-photo-container">
-                        <div class="member-photo-placeholder">${initials}</div>
-                    </div>
-                `;
-            }
+            const photoHTML = photoUrl && photoUrl.trim() !== '' ?
+                `<img src="${photoUrl}" alt="${memberData.firstName}" class="member-photo" onerror="this.parentElement.innerHTML='<div class=\\'member-photo-placeholder\\'>${initials}</div>'"/>` :
+                `<div class="member-photo-placeholder">${initials}</div>`;
 
             const message = `
                 <div class="member-card">
-                    ${photoHTML}
+                    <div class="member-photo-container">${photoHTML}</div>
                     <div class="member-info-section">
-                        <h3>
-                            <span class="success-icon">✅</span>
-                            Check-in Successful!
-                        </h3>
+                        <h3><span class="icon">✓</span> CHECK-IN SUCCESSFUL</h3>
                         <p><strong>Name:</strong> ${memberData.firstName} ${memberData.lastName}</p>
                         <p><strong>Gender:</strong> ${memberData.gender}</p>
-                        <p><strong>Time:</strong> ${timeString}</p>
-                        <div class="member-id-badge">${memberData.id}</div>
+                        <p><strong>Time:</strong> ${time}</p>
+                        <div class="badge success-badge">${memberData.id}</div>
                     </div>
                 </div>
             `;
 
             showStatus(message, 'success');
-
-            setTimeout(() => {
-                if (document.getElementById('status').className.includes('success')) {
-                    hideStatus();
-                }
-            }, 6000);
+            setTimeout(() => hideStatus(), 6000);
         }
 
-        function showAlreadyCheckedInMessage(memberData, result) {
+        function showWarningMessage(memberData, result) {
             const initials = (memberData.firstName.charAt(0) + memberData.lastName.charAt(0)).toUpperCase();
 
-            let photoHTML;
-            if (result.photoUrl && result.photoUrl.trim() !== '') {
-                photoHTML = `
-                    <div class="member-photo-container">
-                        <img 
-                            src="${result.photoUrl}" 
-                            alt="${memberData.firstName} ${memberData.lastName}"
-                            class="member-photo"
-                            onerror="this.parentElement.innerHTML='<div class=\\'member-photo-placeholder\\'>${initials}</div>'"
-                        />
-                    </div>
-                `;
-            } else {
-                photoHTML = `
-                    <div class="member-photo-container">
-                        <div class="member-photo-placeholder">${initials}</div>
-                    </div>
-                `;
-            }
+            const photoHTML = result.photoUrl && result.photoUrl.trim() !== '' ?
+                `<img src="${result.photoUrl}" alt="${memberData.firstName}" class="member-photo" onerror="this.parentElement.innerHTML='<div class=\\'member-photo-placeholder\\'>${initials}</div>'"/>` :
+                `<div class="member-photo-placeholder">${initials}</div>`;
 
             const message = `
                 <div class="member-card">
-                    ${photoHTML}
+                    <div class="member-photo-container">${photoHTML}</div>
                     <div class="member-info-section">
-                        <h3>
-                            <span class="warning-icon">⚠️</span>
-                            Already Checked In
-                        </h3>
+                        <h3><span class="icon">⚠</span> ALREADY CHECKED IN</h3>
                         <p><strong>Name:</strong> ${memberData.firstName} ${memberData.lastName}</p>
                         <p><strong>First Check-in:</strong> ${result.previousCheckIn}</p>
-                        <p style="color: #856404; font-weight: 600;">You've already been marked present today!</p>
-                        <div class="already-checked-badge">ONE CHECK-IN PER DAY</div>
+                        <p style="color: #fbbf24;">One check-in per day limit reached</p>
+                        <div class="badge warning-badge">DUPLICATE SCAN</div>
                     </div>
                 </div>
             `;
 
             showStatus(message, 'warning');
-
-            setTimeout(() => {
-                if (document.getElementById('status').className.includes('warning')) {
-                    hideStatus();
-                }
-            }, 8000);
+            setTimeout(() => hideStatus(), 8000);
         }
 
         function showStatus(message, type) {
@@ -633,8 +758,7 @@
         }
 
         function hideStatus() {
-            const statusDiv = document.getElementById('status');
-            statusDiv.style.display = 'none';
+            document.getElementById('status').style.display = 'none';
         }
 
         function updateStats() {
@@ -642,7 +766,7 @@
             document.getElementById('total-count').textContent = totalCount;
         }
 
-        function playSuccessSound() {
+        function playSound(freq) {
             try {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioContext.createOscillator();
@@ -650,45 +774,15 @@
 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = 800;
+                oscillator.frequency.value = freq;
                 oscillator.type = 'sine';
-
                 gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
 
                 oscillator.start(audioContext.currentTime);
                 oscillator.stop(audioContext.currentTime + 0.1);
-            } catch (e) {
-                // Sound failed
-            }
+            } catch (e) {}
         }
-
-        function playWarningSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = 400;
-                oscillator.type = 'sine';
-
-                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + 0.2);
-            } catch (e) {
-                // Sound failed
-            }
-        }
-
-        // ==========================================
-        // STATS PERSISTENCE
-        // ==========================================
 
         function loadStats() {
             const savedDate = localStorage.getItem('scannerDate');
@@ -724,19 +818,9 @@
             }, timeUntilMidnight);
         }
 
-        resetDailyCount();
-
-        function debugLog(...args) {
-            if (DEBUG_MODE) {
-                console.log('[SCANNER DEBUG]', ...args);
-            }
-        }
-
         window.addEventListener('load', loadStats);
         window.addEventListener('beforeunload', saveStats);
-
-        debugLog('Scanner with daily limit loaded');
-        debugLog('Script URL:', SCRIPT_URL);
+        resetDailyCount();
     </script>
 </body>
 </html>
